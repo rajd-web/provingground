@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Weather & Proving Ground – Slagnäs</title>
+<title>Weather & Proving Ground – Skellefteå</title>
 
 <style>
 :root{
@@ -51,7 +51,7 @@ html,body{
   position:fixed;
   top:96px;
   left:var(--pad);
-  width:min(720px, calc(var(--leftW) - var(--pad)*2));
+  width:min(720px, calc(var(--leftW) - (var(--pad)*2)));
   background:var(--card);
   padding:18px 22px;
   border-radius:var(--radius);
@@ -122,19 +122,44 @@ html,body{
   margin-bottom:12px;
 }
 
+/* Placeholder card content (test A) */
 #trackFrameWrap{
   position:relative;
   height:calc(100vh - 180px);
   overflow:hidden;
+  border-radius: var(--radius);
 }
 
-#trackFrame{
-  position:absolute;
-  inset:0;
-  width:100%;
+#trackPlaceholder{
   height:100%;
-  border:0;
-  background:#111;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:14px;
+  padding:18px;
+}
+
+#trackMsgTitle{
+  font-size:24px;
+  font-weight:900;
+}
+
+#trackMsgText{
+  font-size:16px;
+  opacity:.9;
+  line-height:1.35;
+}
+
+#trackBigButton{
+  display:block;
+  text-align:center;
+  padding:18px 16px;
+  border-radius:14px;
+  background: rgba(255,255,255,.14);
+  color:#fff;
+  font-size:22px;
+  font-weight:900;
+  text-decoration:none;
 }
 
 #fallback{
@@ -148,9 +173,9 @@ html,body{
 
 <body>
 
-<!-- MAP -->
+<!-- MAP (your chosen OSM zoom/bbox) -->
 <iframe id="map"
-src="https://www.openstreetmap.org/export/embed.html?bbox=20.956485271453857,64.73460494231747,20.978586673736576,64.73987965842787&layer=mapnik&marker=64.73724,20.96754">
+  src="https://www.openstreetmap.org/export/embed.html?bbox=20.956485271453857,64.73460494231747,20.978586673736576,64.73987965842787&layer=mapnik&marker=64.73724,20.96754">
 </iframe>
 
 <!-- TITLE -->
@@ -159,7 +184,7 @@ src="https://www.openstreetmap.org/export/embed.html?bbox=20.956485271453857,64.
 <!-- WEATHER -->
 <section id="hud">
   <div id="rowTop">
-    <h1 id="place">Slagnäs</h1>
+    <h1 id="place">Skellefteå</h1>
     <div>
       <div id="time">--:--</div>
       <div id="date">----</div>
@@ -204,74 +229,109 @@ src="https://www.openstreetmap.org/export/embed.html?bbox=20.956485271453857,64.
   </div>
 </section>
 
-<!-- TRACK STATUS -->
+<!-- TRACK STATUS (test A: button) -->
 <aside id="rightPane">
   <div class="card">
     <div id="trackHeader">Proving Ground status</div>
-<div id="trackFrameWrap">
-  <div id="trackPlaceholder">
-    <div id="trackMsgTitle">Login required</div>
-    <div id="trackMsgText">
-      The embedded view can’t use your session in this browser view.
-      Open the status page in a new tab.
+
+    <div id="trackFrameWrap">
+      <div id="trackPlaceholder">
+        <div id="trackMsgTitle">Open status</div>
+        <div id="trackMsgText">
+          The status page requires login and can’t be embedded reliably in this dashboard view.
+          Open it in a new tab.
+        </div>
+
+        <a id="trackBigButton" href="#" target="_blank" rel="noopener">
+          Open Proving Ground status
+        </a>
+      </div>
     </div>
-    <a id="trackBigButton" href="#" target="_blank" rel="noopener">
-      Open Proving Ground status
-    </a>
-  </div>
-</div>
+
     <div id="fallback">
-      If not visible:
-      <a id="trackLink" target="_blank">Open Proving Ground status</a>
+      Direct link:
+      <a id="trackLink" target="_blank" rel="noopener">Open Proving Ground status</a>
     </div>
   </div>
 </aside>
 
 <script>
-/* SETTINGS */
-const LAT=64.73724, LON=20.96754;
-const TRACK_URL="https://test01.rajdsystech.com/resources?id=20,21,22,23,24,25,26,27&title=Proving%20Ground";
-const SMHI_URL=`https://opendata-download-metfcst.smhi.se/api/category/pmp3g/version/2/geotype/point/lon/${LON}/lat/${LAT}/data.json`;
+/* SETTINGS
+   Weather position is the same as your OpenStreetMap marker/zoom center. */
+const LAT = 64.73724, LON = 20.96754;
 
-/* INIT TRACK */
-trackFrame.src=TRACK_URL;
-trackLink.href=TRACK_URL;
+const TRACK_URL =
+  "https://test01.rajdsystech.com/resources?id=20,21,22,23,24,25,26,27&title=Proving%20Ground";
+
+const SMHI_URL =
+  `https://opendata-download-metfcst.smhi.se/api/category/pmp3g/version/2/geotype/point/lon/${LON}/lat/${LAT}/data.json`;
+
+/* INIT TRACK LINKS */
+document.getElementById("trackBigButton").href = TRACK_URL;
+document.getElementById("trackLink").href = TRACK_URL;
 
 /* CLOCK */
 function clock(){
   const n=new Date();
-  time.textContent=n.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
-  date.textContent=n.toLocaleDateString("en-GB",{weekday:"long",year:"numeric",month:"long",day:"numeric"});
+  document.getElementById("time").textContent =
+    n.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
+  document.getElementById("date").textContent =
+    n.toLocaleDateString("en-GB",{weekday:"long",year:"numeric",month:"long",day:"numeric"});
 }
 
-/* ICON */
+/* Simple placeholder icon (kept from your version) */
 function icon(){
-  return `<svg viewBox="0 0 64 64" fill="white"><circle cx="32" cy="32" r="14"/></svg>`;
+  return `<svg viewBox="0 0 64 64" fill="white" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="32" cy="32" r="14"/>
+  </svg>`;
 }
 
-/* WEATHER */
+/* WEATHER (SMHI) */
+function pVal(tsItem, name){
+  const p = tsItem.parameters.find(x => x.name === name);
+  return p ? p.values[0] : null;
+}
+
 async function load(){
-  const d=await fetch(SMHI_URL).then(r=>r.json());
-  const ts=d.timeSeries;
-  const cur=ts[0];
-  const t=cur.parameters.find(p=>p.name==="t").values[0];
-  nowIcon.innerHTML=icon();
-  nowTemp.textContent=Math.round(t)+"°C";
-  desc.textContent="SMHI forecast";
-  updated.textContent="Updated: "+new Date(cur.validTime).toLocaleTimeString("en-GB");
+  try{
+    const d = await fetch(SMHI_URL, { cache: "no-store" }).then(r=>r.json());
+    const ts = d.timeSeries;
+    if(!ts || !ts.length) throw new Error("No timeseries");
 
-  tNow.textContent=Math.round(t)+"°C";
-  dNow.textContent="Now";
+    // Use first forecast step as "now"
+    const cur = ts[0];
+    const t = pVal(cur, "t");
 
-  t3.textContent=Math.round(ts[3].parameters.find(p=>p.name==="t").values[0])+"°C";
-  d3.textContent="In 3 hours";
+    document.getElementById("nowIcon").innerHTML = icon();
+    document.getElementById("nowTemp").textContent = (t!=null) ? (Math.round(t)+"°C") : "--°C";
+    document.getElementById("desc").textContent = "SMHI forecast";
+    document.getElementById("updated").textContent =
+      "Updated: " + new Date(cur.validTime).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
 
-  tT.textContent=Math.round(ts[24].parameters.find(p=>p.name==="t").values[0])+"°C";
-  dT.textContent="Tomorrow";
+    document.getElementById("iNow").innerHTML = icon();
+    document.getElementById("tNow").textContent = (t!=null) ? (Math.round(t)+"°C") : "--°C";
+    document.getElementById("dNow").textContent = "Now";
+
+    // "In 3 hours": 3 steps ahead (works fine for early hourly steps)
+    const t3 = pVal(ts[Math.min(3, ts.length-1)], "t");
+    document.getElementById("i3").innerHTML = icon();
+    document.getElementById("t3").textContent = (t3!=null) ? (Math.round(t3)+"°C") : "--°C";
+    document.getElementById("d3").textContent = "In 3 hours";
+
+    // "Tomorrow": pick ~24 steps ahead if available (simple approach)
+    const idxT = Math.min(24, ts.length-1);
+    const tT = pVal(ts[idxT], "t");
+    document.getElementById("iT").innerHTML = icon();
+    document.getElementById("tT").textContent = (tT!=null) ? (Math.round(tT)+"°C") : "--°C";
+    document.getElementById("dT").textContent = "Tomorrow";
+  } catch(e){
+    document.getElementById("desc").textContent = "Weather data unavailable (SMHI)";
+    document.getElementById("updated").textContent = "";
+  }
 }
 
 clock(); setInterval(clock,1000);
-load(); setInterval(load,600000);
+load();  setInterval(load,600000);
 </script>
 
 </body>
