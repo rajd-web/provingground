@@ -208,9 +208,18 @@ src="https://www.openstreetmap.org/export/embed.html?bbox=20.956485271453857,64.
 <aside id="rightPane">
   <div class="card">
     <div id="trackHeader">Proving Ground status</div>
-    <div id="trackFrameWrap">
-      <iframe id="trackFrame"></iframe>
+<div id="trackFrameWrap">
+  <div id="trackPlaceholder">
+    <div id="trackMsgTitle">Login required</div>
+    <div id="trackMsgText">
+      The embedded view can’t use your session in this browser view.
+      Open the status page in a new tab.
     </div>
+    <a id="trackBigButton" href="#" target="_blank" rel="noopener">
+      Open Proving Ground status
+    </a>
+  </div>
+</div>
     <div id="fallback">
       If not visible:
       <a id="trackLink" target="_blank">Open Proving Ground status</a>
@@ -267,3 +276,4 @@ load(); setInterval(load,600000);
 
 </body>
 </html>
+
