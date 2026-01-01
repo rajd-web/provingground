@@ -3,15 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Weather & Proving Ground – Skellefteå</title>
+<title>Weather – Skellefteå</title>
 
 <style>
 :root{
   --pad:24px;
   --card:rgba(0,0,0,.62);
   --radius:16px;
-  --leftW:60vw;
-  --rightW:40vw;
 }
 
 html,body{
@@ -23,11 +21,11 @@ html,body{
   color:#fff;
 }
 
-/* MAP */
+/* MAP = full screen */
 #map{
   position:fixed;
-  left:0; top:0;
-  width:var(--leftW);
+  inset:0;
+  width:100%;
   height:100vh;
   border:0;
 }
@@ -51,18 +49,21 @@ html,body{
   position:fixed;
   top:96px;
   left:var(--pad);
-  width:min(720px, calc(var(--leftW) - (var(--pad)*2)));
+  width:min(760px, calc(100vw - (var(--pad)*2)));
   background:var(--card);
   padding:18px 22px;
   border-radius:var(--radius);
   backdrop-filter:blur(6px);
+  z-index:20;
 }
 
 #rowTop{
   display:flex;
   justify-content:space-between;
+  gap:16px;
 }
 #place{font-size:30px;margin:0;}
+#clock{ text-align:right; }
 #time{font-size:34px;font-weight:700;}
 #date{font-size:18px;opacity:.9;}
 
@@ -100,80 +101,61 @@ html,body{
 .temp{font-size:38px;font-weight:800;}
 .text{font-size:16px;opacity:.9;margin-top:6px;}
 
-/* RIGHT PANE */
-#rightPane{
+/* ACTION CARD under weather */
+#actionCard{
   position:fixed;
-  right:0; top:0;
-  width:var(--rightW);
-  height:100vh;
-  padding:var(--pad);
-}
-
-.card{
+  left:var(--pad);
+  top: 0; /* set by JS */
+  width:min(760px, calc(100vw - (var(--pad)*2)));
   background:var(--card);
   border-radius:var(--radius);
-  padding:16px;
+  padding:14px 16px;
   backdrop-filter:blur(6px);
+  z-index:20;
 }
-
-#trackHeader{
-  font-size:26px;
+#actionTitle{
+  font-size:18px;
   font-weight:800;
-  margin-bottom:12px;
+  margin-bottom:10px;
 }
-
-/* Placeholder card content (test A) */
-#trackFrameWrap{
-  position:relative;
-  height:calc(100vh - 180px);
-  overflow:hidden;
-  border-radius: var(--radius);
-}
-
-#trackPlaceholder{
-  height:100%;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  gap:14px;
-  padding:18px;
-}
-
-#trackMsgTitle{
-  font-size:24px;
-  font-weight:900;
-}
-
-#trackMsgText{
-  font-size:16px;
-  opacity:.9;
-  line-height:1.35;
-}
-
-#trackBigButton{
-  display:block;
-  text-align:center;
-  padding:18px 16px;
-  border-radius:14px;
+#actionBtn{
+  display:inline-block;
+  padding:10px 14px;
+  border-radius:12px;
   background: rgba(255,255,255,.14);
   color:#fff;
-  font-size:22px;
-  font-weight:900;
+  font-size:16px;
+  font-weight:800;
   text-decoration:none;
 }
 
-#fallback{
-  font-size:14px;
-  opacity:.85;
-  margin-top:10px;
+/* Logos (always on top) */
+#customerLogo{
+  position:fixed;
+  top: var(--pad);
+  right: var(--pad);
+  height: 84px;
+  width:auto;
+  z-index: 9999;
+  pointer-events:none;
+  opacity:.98;
 }
-#fallback a{color:#fff;}
+#logo{
+  position:fixed;
+  right: var(--pad);
+  bottom: var(--pad);
+  height: 160px;
+  width:auto;
+  z-index: 9999;
+  pointer-events:none;
+  opacity:.95;
+}
 </style>
 </head>
 
 <body>
 
-<!-- MAP (your chosen OSM zoom/bbox) -->
+<!-- MAP (your chosen zoom/bbox) -->
 <iframe id="map"
   src="https://www.openstreetmap.org/export/embed.html?bbox=20.956485271453857,64.73460494231747,20.978586673736576,64.73987965842787&layer=mapnik&marker=64.73724,20.96754">
 </iframe>
@@ -181,11 +163,15 @@ html,body{
 <!-- TITLE -->
 <div id="pageTitle">Weather forecast</div>
 
+<!-- Logos -->
+<img id="customerLogo" src="customer_logo.png" alt="Customer logo">
+<img id="logo" src="logo.png" alt="Logo">
+
 <!-- WEATHER -->
 <section id="hud">
   <div id="rowTop">
     <h1 id="place">Skellefteå</h1>
-    <div>
+    <div id="clock">
       <div id="time">--:--</div>
       <div id="date">----</div>
     </div>
@@ -229,48 +215,24 @@ html,body{
   </div>
 </section>
 
-<!-- TRACK STATUS (test A: button) -->
-<aside id="rightPane">
-  <div class="card">
-    <div id="trackHeader">Proving Ground status</div>
-
-    <div id="trackFrameWrap">
-      <div id="trackPlaceholder">
-        <div id="trackMsgTitle">Open status</div>
-        <div id="trackMsgText">
-          The status page requires login and can’t be embedded reliably in this dashboard view.
-          Open it in a new tab.
-        </div>
-
-        <a id="trackBigButton" href="#" target="_blank" rel="noopener">
-          Open Proving Ground status
-        </a>
-      </div>
-    </div>
-
-    <div id="fallback">
-      Direct link:
-      <a id="trackLink" target="_blank" rel="noopener">Open Proving Ground status</a>
-    </div>
-  </div>
-</aside>
+<!-- ACTION under weather -->
+<section id="actionCard" aria-label="Open Proving Ground">
+  <div id="actionTitle">Proving Ground status</div>
+  <a id="actionBtn" href="#" target="_blank" rel="noopener">Open Proving Ground status</a>
+</section>
 
 <script>
-/* SETTINGS
-   Weather position is the same as your OpenStreetMap marker/zoom center. */
-const LAT = 64.73724, LON = 20.96754;
-
+/* SETTINGS */
+const LAT = 64.73724, LON = 20.96754; // same as your OSM marker/zoom center
 const TRACK_URL =
   "https://test01.rajdsystech.com/resources?id=20,21,22,23,24,25,26,27&title=Proving%20Ground";
-
 const SMHI_URL =
   `https://opendata-download-metfcst.smhi.se/api/category/pmp3g/version/2/geotype/point/lon/${LON}/lat/${LAT}/data.json`;
 
-/* INIT TRACK LINKS */
-document.getElementById("trackBigButton").href = TRACK_URL;
-document.getElementById("trackLink").href = TRACK_URL;
+/* Wire button */
+document.getElementById("actionBtn").href = TRACK_URL;
 
-/* CLOCK */
+/* Clock */
 function clock(){
   const n=new Date();
   document.getElementById("time").textContent =
@@ -279,61 +241,194 @@ function clock(){
     n.toLocaleDateString("en-GB",{weekday:"long",year:"numeric",month:"long",day:"numeric"});
 }
 
-/* Simple placeholder icon (kept from your version) */
-function icon(){
-  return `<svg viewBox="0 0 64 64" fill="white" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="32" cy="32" r="14"/>
-  </svg>`;
+/* --- SMHI Wsymb2 -> icon + text --- */
+function svgSun(s){ return `
+<svg viewBox="0 0 64 64" width="${s}" height="${s}" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="32" cy="32" r="12" fill="white"/>
+  <g stroke="white" stroke-width="4" stroke-linecap="round">
+    <line x1="32" y1="4" x2="32" y2="14"/><line x1="32" y1="50" x2="32" y2="60"/>
+    <line x1="4" y1="32" x2="14" y2="32"/><line x1="50" y1="32" x2="60" y2="32"/>
+    <line x1="12" y1="12" x2="19" y2="19"/><line x1="45" y1="45" x2="52" y2="52"/>
+    <line x1="52" y1="12" x2="45" y2="19"/><line x1="19" y1="45" x2="12" y2="52"/>
+  </g>
+</svg>`; }
+
+function svgCloud(s){ return `
+<svg viewBox="0 0 64 64" width="${s}" height="${s}" xmlns="http://www.w3.org/2000/svg">
+  <path fill="white" d="M22 48h26a12 12 0 0 0 0-24 16 16 0 0 0-31-4A10 10 0 0 0 22 48z"/>
+</svg>`; }
+
+function svgRain(s){ return `
+<svg viewBox="0 0 64 64" width="${s}" height="${s}" xmlns="http://www.w3.org/2000/svg">
+  <path fill="white" d="M22 36h26a10 10 0 0 0 0-20 14 14 0 0 0-27-3A9 9 0 0 0 22 36z"/>
+  <g stroke="white" stroke-width="4" stroke-linecap="round">
+    <line x1="24" y1="42" x2="20" y2="54"/>
+    <line x1="34" y1="42" x2="30" y2="56"/>
+    <line x1="44" y1="42" x2="40" y2="54"/>
+  </g>
+</svg>`; }
+
+function svgSnow(s){ return `
+<svg viewBox="0 0 64 64" width="${s}" height="${s}" xmlns="http://www.w3.org/2000/svg">
+  <path fill="white" d="M22 36h26a10 10 0 0 0 0-20 14 14 0 0 0-27-3A9 9 0 0 0 22 36z"/>
+  <g stroke="white" stroke-width="3" stroke-linecap="round">
+    <line x1="24" y1="44" x2="24" y2="56"/><line x1="18" y1="50" x2="30" y2="50"/>
+    <line x1="34" y1="44" x2="34" y2="56"/><line x1="28" y1="50" x2="40" y2="50"/>
+    <line x1="44" y1="44" x2="44" y2="56"/><line x1="38" y1="50" x2="50" y2="50"/>
+  </g>
+</svg>`; }
+
+function svgFog(s){ return `
+<svg viewBox="0 0 64 64" width="${s}" height="${s}" xmlns="http://www.w3.org/2000/svg">
+  <g stroke="white" stroke-width="5" stroke-linecap="round" opacity="0.95">
+    <line x1="10" y1="22" x2="54" y2="22"/>
+    <line x1="14" y1="32" x2="58" y2="32"/>
+    <line x1="10" y1="42" x2="50" y2="42"/>
+  </g>
+</svg>`; }
+
+function svgThunder(s){ return `
+<svg viewBox="0 0 64 64" width="${s}" height="${s}" xmlns="http://www.w3.org/2000/svg">
+  <path fill="white" d="M22 34h26a10 10 0 0 0 0-20 14 14 0 0 0-27-3A9 9 0 0 0 22 34z"/>
+  <path fill="white" d="M30 36l-6 14h8l-4 12 14-18h-8l6-8z"/>
+</svg>`; }
+
+function wsymb2ToVisual(w){
+  const textMap = {
+    1:"Clear sky", 2:"Nearly clear", 3:"Variable cloudiness", 4:"Partly cloudy", 5:"Cloudy", 6:"Overcast",
+    7:"Fog",
+    8:"Light rain showers", 9:"Rain showers", 10:"Heavy rain showers", 11:"Thunderstorm",
+    12:"Light sleet showers", 13:"Sleet showers", 14:"Heavy sleet showers",
+    15:"Light snow showers", 16:"Snow showers", 17:"Heavy snow showers",
+    18:"Light rain", 19:"Rain", 20:"Heavy rain", 21:"Thunder",
+    22:"Light sleet", 23:"Sleet", 24:"Heavy sleet",
+    25:"Light snowfall", 26:"Snowfall", 27:"Heavy snowfall"
+  };
+
+  let iconFn = svgCloud;
+  if ([1,2].includes(w)) iconFn = svgSun;
+  else if ([3,4,5,6].includes(w)) iconFn = svgCloud;
+  else if (w === 7) iconFn = svgFog;
+  else if ([11,21].includes(w)) iconFn = svgThunder;
+  else if ([15,16,17,25,26,27].includes(w)) iconFn = svgSnow;
+  else if ([8,9,10,12,13,14,18,19,20,22,23,24].includes(w)) iconFn = svgRain;
+
+  return { iconFn, text: textMap[w] || `Wsymb2 ${w}` };
 }
 
-/* WEATHER (SMHI) */
 function pVal(tsItem, name){
-  const p = tsItem.parameters.find(x => x.name === name);
-  return p ? p.values[0] : null;
+  const p = (tsItem.parameters || []).find(x => x.name === name);
+  return p ? p.values?.[0] : null;
 }
 
-async function load(){
+function findIndexAtOrAfter(timeSeries, targetMs){
+  for (let i=0; i<timeSeries.length; i++){
+    const ms = Date.parse(timeSeries[i].validTime);
+    if (!Number.isNaN(ms) && ms >= targetMs) return i;
+  }
+  return 0;
+}
+
+function findClosestIndex(timeSeries, targetMs){
+  let bestI = 0, bestD = Infinity;
+  for (let i=0; i<timeSeries.length; i++){
+    const ms = Date.parse(timeSeries[i].validTime);
+    if (Number.isNaN(ms)) continue;
+    const d = Math.abs(ms - targetMs);
+    if (d < bestD){ bestD = d; bestI = i; }
+  }
+  return bestI;
+}
+
+async function loadWeather(){
   try{
     const d = await fetch(SMHI_URL, { cache: "no-store" }).then(r=>r.json());
-    const ts = d.timeSeries;
-    if(!ts || !ts.length) throw new Error("No timeseries");
+    const ts = d.timeSeries || [];
+    if(!ts.length) throw new Error("No timeseries");
 
-    // Use first forecast step as "now"
-    const cur = ts[0];
-    const t = pVal(cur, "t");
+    const nowMs = Date.now();
+    const iNowIdx = findIndexAtOrAfter(ts, nowMs);
+    const i3Idx = Math.min(iNowIdx + 3, ts.length - 1);
 
-    document.getElementById("nowIcon").innerHTML = icon();
-    document.getElementById("nowTemp").textContent = (t!=null) ? (Math.round(t)+"°C") : "--°C";
-    document.getElementById("desc").textContent = "SMHI forecast";
+    const t = new Date();
+    const tomorrowNoon = new Date(t.getFullYear(), t.getMonth(), t.getDate() + 1, 12, 0, 0, 0).getTime();
+    const iTomIdx = findClosestIndex(ts, tomorrowNoon);
+
+    function apply(iconId, tempId, textId, idx, size, mode){
+      const item = ts[idx];
+      const temp = pVal(item, "t");
+      const wind = pVal(item, "ws");
+      const w = Number(pVal(item, "Wsymb2"));
+      const vis = wsymb2ToVisual(w);
+
+      document.getElementById(iconId).innerHTML = vis.iconFn(size);
+
+      if (mode === "range"){
+        const start = Math.max(0, idx - 12);
+        const end = Math.min(ts.length - 1, idx + 12);
+        let minT = Infinity, maxT = -Infinity;
+        for (let i=start; i<=end; i++){
+          const ti = pVal(ts[i], "t");
+          if (ti == null) continue;
+          minT = Math.min(minT, ti);
+          maxT = Math.max(maxT, ti);
+        }
+        const range = (minT !== Infinity && maxT !== -Infinity)
+          ? `${Math.round(minT)}–${Math.round(maxT)}°C`
+          : (temp != null ? `${Math.round(temp)}°C` : "--°C");
+        document.getElementById(tempId).textContent = range;
+      } else {
+        document.getElementById(tempId).textContent = (temp != null) ? `${Math.round(temp)}°C` : "--°C";
+      }
+
+      document.getElementById(textId).textContent =
+        `${vis.text}${wind != null ? ` · Wind ${Math.round(wind)} m/s` : ""}`;
+    }
+
+    // Big now
+    const nowItem = ts[iNowIdx];
+    const tempNow = pVal(nowItem, "t");
+    const windNow = pVal(nowItem, "ws");
+    const wNow = Number(pVal(nowItem, "Wsymb2"));
+    const visNow = wsymb2ToVisual(wNow);
+
+    document.getElementById("nowIcon").innerHTML = visNow.iconFn(90);
+    document.getElementById("nowTemp").textContent = (tempNow != null) ? `${Math.round(tempNow)}°C` : "--°C";
+    document.getElementById("desc").textContent =
+      `${visNow.text}${windNow != null ? ` · Wind ${Math.round(windNow)} m/s` : ""}`;
+
+    const upd = new Date(ts[iNowIdx].validTime);
     document.getElementById("updated").textContent =
-      "Updated: " + new Date(cur.validTime).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
+      `Updated: ${upd.toLocaleTimeString("en-GB", {hour:"2-digit", minute:"2-digit"})}`;
 
-    document.getElementById("iNow").innerHTML = icon();
-    document.getElementById("tNow").textContent = (t!=null) ? (Math.round(t)+"°C") : "--°C";
-    document.getElementById("dNow").textContent = "Now";
+    // Widgets
+    apply("iNow", "tNow", "dNow", iNowIdx, 56, "single");
+    apply("i3",   "t3",   "d3",   i3Idx,   56, "single");
+    apply("iT",   "tT",   "dT",   iTomIdx, 56, "range");
 
-    // "In 3 hours": 3 steps ahead (works fine for early hourly steps)
-    const t3 = pVal(ts[Math.min(3, ts.length-1)], "t");
-    document.getElementById("i3").innerHTML = icon();
-    document.getElementById("t3").textContent = (t3!=null) ? (Math.round(t3)+"°C") : "--°C";
-    document.getElementById("d3").textContent = "In 3 hours";
-
-    // "Tomorrow": pick ~24 steps ahead if available (simple approach)
-    const idxT = Math.min(24, ts.length-1);
-    const tT = pVal(ts[idxT], "t");
-    document.getElementById("iT").innerHTML = icon();
-    document.getElementById("tT").textContent = (tT!=null) ? (Math.round(tT)+"°C") : "--°C";
-    document.getElementById("dT").textContent = "Tomorrow";
   } catch(e){
     document.getElementById("desc").textContent = "Weather data unavailable (SMHI)";
     document.getElementById("updated").textContent = "";
   }
 }
 
-clock(); setInterval(clock,1000);
-load();  setInterval(load,600000);
+/* Position action card directly under hud */
+function positionActionCard(){
+  const hud = document.getElementById("hud");
+  const card = document.getElementById("actionCard");
+  const rect = hud.getBoundingClientRect();
+  card.style.top = (rect.bottom + 16) + "px";
+  card.style.left = rect.left + "px";
+  card.style.width = rect.width + "px";
+}
+window.addEventListener("resize", positionActionCard);
+
+clock(); setInterval(clock, 1000);
+loadWeather(); setInterval(loadWeather, 10*60*1000);
+
+positionActionCard();
+setTimeout(positionActionCard, 300);
 </script>
 
 </body>
 </html>
-
