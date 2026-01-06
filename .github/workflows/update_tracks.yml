@@ -15,7 +15,8 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
- - name: Sanity check secrets exist (no values printed)
+
+      - name: Sanity check secrets exist (no values printed)
         env:
           PG_API_KEY: ${{ secrets.PG_API_KEY }}
           PG_RESOURCES_BASE: ${{ secrets.PG_RESOURCES_BASE }}
@@ -28,7 +29,7 @@ jobs:
           [ -n "$PG_RESOURCE_IDS" ] || (echo "PG_RESOURCE_IDS is empty" && exit 1)
           [ -n "$PG_TITLE" ] || (echo "PG_TITLE is empty" && exit 1)
           echo "Secrets look non-empty ✅"
-          
+
       - name: Fetch resources page (HTML)
         env:
           PG_API_KEY: ${{ secrets.PG_API_KEY }}
@@ -38,20 +39,16 @@ jobs:
         run: |
           set -e
 
-          # URL-encode title safely (space -> %20 etc)
           ENC_TITLE="$(python3 - << 'PY'
 import os, urllib.parse
 print(urllib.parse.quote(os.environ.get("PG_TITLE",""), safe=""))
 PY
 )"
-
-          # Build URL (avoid shell issues)
           URL="${PG_RESOURCES_BASE}?api_key=${PG_API_KEY}&id=${PG_RESOURCE_IDS}&title=${ENC_TITLE}"
 
-          echo "Fetching (base): ${PG_RESOURCES_BASE}"
-          echo "Fetching (ids):  ${PG_RESOURCE_IDS}"
-          echo "Fetching (title): ${PG_TITLE}"
-          # DO NOT echo full URL (would leak api_key to logs)
+          echo "Fetching base:  ${PG_RESOURCES_BASE}"
+          echo "Fetching ids:   ${PG_RESOURCE_IDS}"
+          echo "Fetching title: ${PG_TITLE}"
 
           curl -sS -L --fail "$URL" -o resources.html
 
@@ -70,17 +67,17 @@ PY
 
           tracks = []
 
-          # Parse table rows if present
+          # Try parse table rows if present
           for tr in re.findall(r"<tr[^>]*>(.*?)</tr>", html, flags=re.S|re.I):
               tds = re.findall(r"<t[dh][^>]*>(.*?)</t[dh]>", tr, flags=re.S|re.I)
               if len(tds) >= 3:
                   cols = [strip_tags(c) for c in tds]
-                  if cols[0].lower() == "name":
+                  if cols and cols[0].strip().lower() == "name":
                       continue
-                  name = cols[0]
-                  state = cols[2] if len(cols) > 2 else ""
-                  capacity = cols[3] if len(cols) > 3 else ""
-                  info = cols[4] if len(cols) > 4 else ""
+                  name = cols[0].strip() if len(cols) > 0 else ""
+                  state = cols[2].strip() if len(cols) > 2 else ""
+                  capacity = cols[3].strip() if len(cols) > 3 else ""
+                  info = cols[4].strip() if len(cols) > 4 else ""
                   if name and state:
                       tracks.append({
                           "name": name,
