@@ -30,20 +30,23 @@ jobs:
           [ -n "$PG_TITLE" ] || (echo "PG_TITLE is empty" && exit 1)
           echo "Secrets look non-empty ✅"
 
-      - name: Fetch resource states (JSON via api_key)
+      - name: Fetch resource states (debug)
         env:
           PG_API_KEY: ${{ secrets.PG_API_KEY }}
           PG_STATE_URL: ${{ secrets.PG_STATE_URL }}
         run: |
-          set -e
+          set +e
           URL="${PG_STATE_URL}?api_key=${PG_API_KEY}"
 
-          curl -sS -L --fail \
-            -H "Accept: application/json, text/javascript, */*; q=0.01" \
-            -H "Accept-Language: sv,en-US;q=0.9,en;q=0.8" \
-            -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36" \
-            "$URL" -o resourcestate.json
-          echo "Fetched resourcestate.json ✅"
+          CODE=$(curl -sS -L -o resourcestate.json -w "%{http_code}" "$URL")
+          echo "HTTP status: $CODE"
+          echo "First 200 chars of response:"
+          head -c 200 resourcestate.json || true
+          echo
+
+          if [ "$CODE" != "200" ]; then
+            exit 1
+          fi
 
       - name: Build tracks.json (filter selected IDs)
         env:
