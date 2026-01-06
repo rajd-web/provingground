@@ -36,8 +36,13 @@ jobs:
           PG_STATE_URL: ${{ secrets.PG_STATE_URL }}
         run: |
           set -e
-          # Do not echo full URL (api_key must not leak into logs)
-          curl -sS -L --fail "${PG_STATE_URL}?api_key=${PG_API_KEY}" -o resourcestate.json
+          URL="${PG_STATE_URL}?api_key=${PG_API_KEY}"
+
+          curl -sS -L --fail \
+            -H "Accept: application/json, text/javascript, */*; q=0.01" \
+            -H "Accept-Language: sv,en-US;q=0.9,en;q=0.8" \
+            -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36" \
+            "$URL" -o resourcestate.json
           echo "Fetched resourcestate.json ✅"
 
       - name: Build tracks.json (filter selected IDs)
