@@ -48,6 +48,13 @@ jobs:
             exit 1
           fi
 
+      - name: Debug – show first lines of HTML
+        run: |
+          echo "----- head resources.html -----"
+          head -n 80 resources.html
+          echo "----- grep resourcename -----"
+          grep -n "resourcename" -m 5 resources.html || true
+          
       - name: Build tracks.json (filter selected IDs)
         env:
           PG_RESOURCE_IDS: ${{ secrets.PG_RESOURCE_IDS }}
