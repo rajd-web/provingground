@@ -1,0 +1,86 @@
+name: Update tracks.json
+
+on:
+  schedule:
+    - cron: "*/2 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Fetch resources page (HTML)
+        env:
+          PG_API_KEY: ${{ secrets.PG_API_KEY }}
+          PG_RESOURCES_BASE: ${{ secrets.PG_RESOURCES_BASE }}
+          PG_RESOURCE_IDS: ${{ secrets.PG_RESOURCE_IDS }}
+          PG_TITLE: ${{ secrets.PG_TITLE }}
+        run: |
+          set -e
+          URL="${PG_RESOURCES_BASE}?api_key=${PG_API_KEY}&id=${PG_RESOURCE_IDS}&title=${PG_TITLE}"
+          echo "Fetching $URL"
+          curl -sS "$URL" -o resources.html
+
+      - name: Parse HTML to tracks.json
+        run: |
+          python3 - << 'PY'
+          import json, re
+
+          html = open("resources.html", "r", encoding="utf-8", errors="ignore").read()
+
+          def strip_tags(s):
+              s = re.sub(r"<script.*?</script>", " ", s, flags=re.S|re.I)
+              s = re.sub(r"<style.*?</style>", " ", s, flags=re.S|re.I)
+              s = re.sub(r"<[^>]+>", " ", s)
+              return re.sub(r"\s+", " ", s).strip()
+
+          tracks = []
+
+          # Parse table rows if present
+          for tr in re.findall(r"<tr[^>]*>(.*?)</tr>", html, flags=re.S|re.I):
+              tds = re.findall(r"<t[dh][^>]*>(.*?)</t[dh]>", tr, flags=re.S|re.I)
+              if len(tds) >= 3:
+                  cols = [strip_tags(c) for c in tds]
+                  if cols[0].lower() == "name":
+                      continue
+                  name = cols[0]
+                  state = cols[2] if len(cols) > 2 else ""
+                  capacity = cols[3] if len(cols) > 3 else ""
+                  info = cols[4] if len(cols) > 4 else ""
+                  if name and state:
+                      tracks.append({
+                          "name": name,
+                          "state": state,
+                          "capacity": capacity,
+                          "info": info
+                      })
+
+          out = {
+              "title": "My Tracks",
+              "tracks": tracks
+          }
+
+          with open("tracks.json", "w", encoding="utf-8") as f:
+              json.dump(out, f, ensure_ascii=False, indent=2)
+
+          print(f"tracks.json written with {len(tracks)} entries")
+          PY
+
+      - name: Commit & push if changed
+        run: |
+          if git diff --quiet tracks.json; then
+            echo "No changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add tracks.json
+          git commit -m "Update tracks.json"
+          git push
