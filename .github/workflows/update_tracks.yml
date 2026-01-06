@@ -39,11 +39,8 @@ jobs:
         run: |
           set -e
 
-          ENC_TITLE="$(python3 - << 'PY'
-import os, urllib.parse
-print(urllib.parse.quote(os.environ.get("PG_TITLE",""), safe=""))
-PY
-)"
+          ENC_TITLE=$(python3 -c "import os,urllib.parse; print(urllib.parse.quote(os.environ.get('PG_TITLE',''), safe=''))")
+
           URL="${PG_RESOURCES_BASE}?api_key=${PG_API_KEY}&id=${PG_RESOURCE_IDS}&title=${ENC_TITLE}"
 
           echo "Fetching base:  ${PG_RESOURCES_BASE}"
