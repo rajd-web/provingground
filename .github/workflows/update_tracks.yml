@@ -24,9 +24,23 @@ jobs:
           PG_TITLE: ${{ secrets.PG_TITLE }}
         run: |
           set -e
-          URL="${PG_RESOURCES_BASE}?api_key=${PG_API_KEY}&id=${PG_RESOURCE_IDS}&title=${PG_TITLE}"
-          echo "Fetching $URL"
-          curl -sS "$URL" -o resources.html
+
+          # URL-encode title safely (space -> %20 etc)
+          ENC_TITLE="$(python3 - << 'PY'
+import os, urllib.parse
+print(urllib.parse.quote(os.environ.get("PG_TITLE",""), safe=""))
+PY
+)"
+
+          # Build URL (avoid shell issues)
+          URL="${PG_RESOURCES_BASE}?api_key=${PG_API_KEY}&id=${PG_RESOURCE_IDS}&title=${ENC_TITLE}"
+
+          echo "Fetching (base): ${PG_RESOURCES_BASE}"
+          echo "Fetching (ids):  ${PG_RESOURCE_IDS}"
+          echo "Fetching (title): ${PG_TITLE}"
+          # DO NOT echo full URL (would leak api_key to logs)
+
+          curl -sS -L --fail "$URL" -o resources.html
 
       - name: Parse HTML to tracks.json
         run: |
