@@ -15,7 +15,20 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-
+ - name: Sanity check secrets exist (no values printed)
+        env:
+          PG_API_KEY: ${{ secrets.PG_API_KEY }}
+          PG_RESOURCES_BASE: ${{ secrets.PG_RESOURCES_BASE }}
+          PG_RESOURCE_IDS: ${{ secrets.PG_RESOURCE_IDS }}
+          PG_TITLE: ${{ secrets.PG_TITLE }}
+        run: |
+          set -e
+          [ -n "$PG_API_KEY" ] || (echo "PG_API_KEY is empty" && exit 1)
+          [ -n "$PG_RESOURCES_BASE" ] || (echo "PG_RESOURCES_BASE is empty" && exit 1)
+          [ -n "$PG_RESOURCE_IDS" ] || (echo "PG_RESOURCE_IDS is empty" && exit 1)
+          [ -n "$PG_TITLE" ] || (echo "PG_TITLE is empty" && exit 1)
+          echo "Secrets look non-empty ✅"
+          
       - name: Fetch resources page (HTML)
         env:
           PG_API_KEY: ${{ secrets.PG_API_KEY }}
